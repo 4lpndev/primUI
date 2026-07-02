@@ -397,42 +397,38 @@ function Library:Slider(Group, text, min, max, default, callback)
     local Holder = Group.Holder
     local value = default or min
 
-    local Frame = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = self.Theme.Tertiary,
-        Parent = Holder
-    })
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, 0, 0, 40)
+    Frame.BackgroundColor3 = self.Theme.Tertiary
+    Frame.Parent = Holder
 
-    Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = Frame})
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
 
-    local Label = Create("TextLabel", {
-        Size = UDim2.new(1, -10, 0, 18),
-        Position = UDim2.fromOffset(10, 2),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = Frame
-    })
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -10, 0, 18)
+    Label.Position = UDim2.fromOffset(10, 2)
+    Label.BackgroundTransparency = 1
+    Label.Text = text .. ": " .. tostring(default)
+    Label.TextColor3 = self.Theme.Text
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 13
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Frame
 
-    local BarBack = Create("Frame", {
-        Size = UDim2.new(1, -20, 0, 6),
-        Position = UDim2.fromOffset(10, 25),
-        BackgroundColor3 = Color3.fromRGB(40,40,40),
-        Parent = Frame
-    })
+    local BarBack = Instance.new("Frame")
+    BarBack.Size = UDim2.new(1, -20, 0, 6)
+    BarBack.Position = UDim2.fromOffset(10, 25)
+    BarBack.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    BarBack.Parent = Frame
 
-    Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = BarBack})
+    Instance.new("UICorner", BarBack).CornerRadius = UDim.new(1, 0)
 
-    local Fill = Create("Frame", {
-        Size = UDim2.new(0,0,1,0),
-        BackgroundColor3 = self.Theme.Accent,
-        Parent = BarBack
-    })
+    local Fill = Instance.new("Frame")
+    Fill.Size = UDim2.new(0,0,1,0)
+    Fill.BackgroundColor3 = self.Theme.Accent
+    Fill.Parent = BarBack
 
-    Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = Fill})
+    Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
 
     local dragging = false
 
@@ -440,7 +436,8 @@ function Library:Slider(Group, text, min, max, default, callback)
         value = math.clamp(v, min, max)
         local alpha = (value - min) / (max - min)
 
-        Tween(Fill, {Size = UDim2.new(alpha,0,1,0)}, 0.1)
+        Fill.Size = UDim2.new(alpha, 0, 1, 0)
+        Label.Text = text .. ": " .. math.floor(value)
 
         if callback then
             callback(value)
@@ -459,14 +456,23 @@ function Library:Slider(Group, text, min, max, default, callback)
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(i)
+    game:GetService("UserInputService").InputChanged:Connect(function(i)
         if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
             local x = (i.Position.X - BarBack.AbsolutePosition.X) / BarBack.AbsoluteSize.X
             set(min + (max - min) * x)
         end
     end)
 
+    -- set initial value
     set(default)
+
+    -- 🔥 RETURN OBJECT so you can access value
+    return {
+        Set = set,
+        Get = function()
+            return value
+        end
+    }
 end
 
 --// Library.lua (PART 4)
