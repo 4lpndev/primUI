@@ -914,24 +914,6 @@ function Library:EnablePolish(Window)
     local Sidebar = Window.Sidebar
 
     --/////////////////////////////////////////////////////
-    -- SEARCH BAR (TOP SIDEBAR)
-    --/////////////////////////////////////////////////////
-    local Search = Create("TextBox", {
-        Size = UDim2.new(1, -10, 0, 28),
-        Position = UDim2.fromOffset(5, 5),
-        BackgroundColor3 = self.Theme.Tertiary,
-        PlaceholderText = "Search...",
-        Text = "",
-        TextColor3 = self.Theme.Text,
-        PlaceholderColor3 = self.Theme.SubText,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        Parent = Sidebar
-    })
-
-    Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = Search})
-
-    --/////////////////////////////////////////////////////
     -- TAB HIGHLIGHT SYSTEM
     --/////////////////////////////////////////////////////
     local function updateTabVisual(tab, active)
