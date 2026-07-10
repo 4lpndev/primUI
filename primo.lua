@@ -93,7 +93,7 @@ function Library:CreateWindow(config)
         TextYAlignment = Enum.TextYAlignment.Center,
         Parent = TopBar
     })
-    
+
     local ScreenGui = Create("ScreenGui", {
         Name = "UILibrary",
         ResetOnSpawn = false,
@@ -636,38 +636,109 @@ end
 --/////////////////////////////////////////////////////
 --// COLOR PICKER (simple HSV picker)
 --/////////////////////////////////////////////////////
-function Library:Colorpicker(Group, text, default, callback)
+function Library:Colorpicker(Group,text,default,callback)
+
     local Holder = Group.Holder
+    local color = default or Color3.new(1,1,1)
 
-    local color = default or Color3.fromRGB(255,255,255)
-
-    local Frame = Create("TextButton", {
-        Size = UDim2.new(1,0,0,30),
+    local Frame = Create("Frame",{
+        Size = UDim2.new(1,0,0,160),
         BackgroundColor3 = self.Theme.Tertiary,
-        Text = text,
-        TextColor3 = self.Theme.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
         Parent = Holder
     })
 
-    Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = Frame})
-
-    local Preview = Create("Frame", {
-        Size = UDim2.fromOffset(20,20),
-        Position = UDim2.new(1,-30,0.5,-10),
-        BackgroundColor3 = color,
+    Create("UICorner",{
+        CornerRadius = UDim.new(0,6),
         Parent = Frame
     })
 
-    Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = Preview})
 
-    Frame.MouseButton1Click:Connect(function()
-        -- simple random color cycle picker (lightweight version)
-        color = Color3.fromHSV(math.random(), 1, 1)
-        Preview.BackgroundColor3 = color
-        if callback then callback(color) end
+    local Label = Create("TextLabel",{
+        Size = UDim2.new(1,0,0,25),
+        Text=text,
+        BackgroundTransparency=1,
+        TextColor3=self.Theme.Text,
+        Font=Enum.Font.Gotham,
+        TextSize=13,
+        Parent=Frame
+    })
+
+
+    local Picker = Create("Frame",{
+        Size=UDim2.fromOffset(120,120),
+        Position=UDim2.fromOffset(10,30),
+        BackgroundColor3=color,
+        Parent=Frame
+    })
+
+
+    Create("UICorner",{
+        CornerRadius=UDim.new(0,5),
+        Parent=Picker
+    })
+
+
+    local Hue = Create("Frame",{
+        Size=UDim2.fromOffset(20,120),
+        Position=UDim2.fromOffset(140,30),
+        BackgroundColor3=Color3.fromRGB(255,0,0),
+        Parent=Frame
+    })
+
+
+    local dragging=false
+
+
+    Picker.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=true
+        end
     end)
+
+
+    Picker.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=false
+        end
+    end)
+
+
+    UserInputService.InputChanged:Connect(function(i)
+
+        if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then
+
+            local x=
+            math.clamp(
+                (i.Position.X-Picker.AbsolutePosition.X)
+                /Picker.AbsoluteSize.X,
+                0,1
+            )
+
+            local y=
+            math.clamp(
+                (i.Position.Y-Picker.AbsolutePosition.Y)
+                /Picker.AbsoluteSize.Y,
+                0,1
+            )
+
+
+            color=Color3.fromHSV(
+                x,
+                1-y,
+                1
+            )
+
+
+            Picker.BackgroundColor3=color
+
+
+            if callback then
+                callback(color)
+            end
+
+        end
+    end)
+
 end
 
 --/////////////////////////////////////////////////////
@@ -676,34 +747,58 @@ end
 function Library:Notify(text, duration)
     duration = duration or 3
 
-    local gui = game:GetService("CoreGui")
+    local player = game:GetService("Players").LocalPlayer
+    local gui = player:WaitForChild("PlayerGui")
+
+    local holder = gui:FindFirstChild("primUINotifications")
+
+    if not holder then
+        holder = Create("ScreenGui", {
+            Name = "primUINotifications",
+            ResetOnSpawn = false,
+            Parent = gui
+        })
+    end
 
     local notif = Create("Frame", {
-        Size = UDim2.fromOffset(220,40),
-        Position = UDim2.new(1, -240, 1, -80),
+        Size = UDim2.fromOffset(250,45),
+        Position = UDim2.new(1,-270,1,-70),
         BackgroundColor3 = self.Theme.Secondary,
-        Parent = gui
+        Parent = holder
     })
 
-    Create("UICorner", {CornerRadius = UDim.new(0,6), Parent = notif})
+    Create("UICorner", {
+        CornerRadius = UDim.new(0,8),
+        Parent = notif
+    })
 
     local label = Create("TextLabel", {
-        Size = UDim2.new(1, -10, 1, 0),
+        Size = UDim2.new(1,-20,1,0),
         Position = UDim2.fromOffset(10,0),
         BackgroundTransparency = 1,
         Text = text,
         TextColor3 = self.Theme.Text,
         Font = Enum.Font.Gotham,
-        TextSize = 13,
+        TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = notif
     })
 
-    Tween(notif, {Position = UDim2.new(1, -240, 1, -120)}, 0.3)
+    Tween(
+        notif,
+        {
+            Position = UDim2.new(1,-270,1,-130)
+        },
+        .3
+    )
 
-    task.delay(duration, function()
-        Tween(notif, {BackgroundTransparency = 1}, 0.3)
-        task.wait(0.3)
+    task.delay(duration,function()
+        Tween(notif,{
+            BackgroundTransparency = 1
+        },.3)
+
+        task.wait(.3)
+
         notif:Destroy()
     end)
 end
