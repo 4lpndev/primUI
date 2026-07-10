@@ -73,7 +73,27 @@ end
 --// Window constructor
 function Library:CreateWindow(config)
     config = config or {}
+    local TopBar = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = self.Theme.TopBar,
+        BorderSizePixel = 0,
+        Parent = Main
+    })
 
+    -- UI Name / Title
+    local Title = Create("TextLabel", {
+        Size = UDim2.new(1, -20, 0, 40),
+        Position = UDim2.fromOffset(10, 0),
+        BackgroundTransparency = 1,
+        Text = config.Name or "primUI",
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        Parent = TopBar
+    })
+    
     local ScreenGui = Create("ScreenGui", {
         Name = "UILibrary",
         ResetOnSpawn = false,
