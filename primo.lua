@@ -653,7 +653,7 @@ function Library:Colorpicker(Group,text,default,callback)
     })
 
 
-    local Label = Create("TextLabel",{
+    Create("TextLabel",{
         Size = UDim2.new(1,0,0,25),
         Text=text,
         BackgroundTransparency=1,
@@ -664,10 +664,11 @@ function Library:Colorpicker(Group,text,default,callback)
     })
 
 
+    -- HSV picker
     local Picker = Create("Frame",{
         Size=UDim2.fromOffset(120,120),
         Position=UDim2.fromOffset(10,30),
-        BackgroundColor3=color,
+        BackgroundColor3=Color3.fromHSV(0,1,1),
         Parent=Frame
     })
 
@@ -678,66 +679,144 @@ function Library:Colorpicker(Group,text,default,callback)
     })
 
 
+    -- White gradient
+    local White = Create("Frame",{
+        Size=UDim2.fromScale(1,1),
+        BackgroundColor3=Color3.new(1,1,1),
+        Parent=Picker
+    })
+
+    local WhiteGradient = Instance.new("UIGradient")
+    WhiteGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0,0),
+        NumberSequenceKeypoint.new(1,1)
+    }
+    WhiteGradient.Parent = White
+
+
+    -- Black gradient
+    local Black = Create("Frame",{
+        Size=UDim2.fromScale(1,1),
+        BackgroundColor3=Color3.new(0,0,0),
+        Parent=Picker
+    })
+
+    local BlackGradient = Instance.new("UIGradient")
+    BlackGradient.Rotation = 90
+    BlackGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0,1),
+        NumberSequenceKeypoint.new(1,0)
+    }
+    BlackGradient.Parent = Black
+
+
+    -- Hue bar
     local Hue = Create("Frame",{
         Size=UDim2.fromOffset(20,120),
         Position=UDim2.fromOffset(140,30),
-        BackgroundColor3=Color3.fromRGB(255,0,0),
         Parent=Frame
     })
 
 
-    local dragging=false
+    local HueGradient = Instance.new("UIGradient")
+    HueGradient.Rotation = 90
+    HueGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),
+        ColorSequenceKeypoint.new(.16,Color3.fromRGB(255,255,0)),
+        ColorSequenceKeypoint.new(.33,Color3.fromRGB(0,255,0)),
+        ColorSequenceKeypoint.new(.5,Color3.fromRGB(0,255,255)),
+        ColorSequenceKeypoint.new(.66,Color3.fromRGB(0,0,255)),
+        ColorSequenceKeypoint.new(.83,Color3.fromRGB(255,0,255)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(255,0,0))
+    }
+    HueGradient.Parent = Hue
+
+
+    local hue,sat,val = Color3.toHSV(color)
+
+    local pickingColor = false
+    local pickingHue = false
+
+
+    local function Update()
+
+        Picker.BackgroundColor3 =
+            Color3.fromHSV(hue,1,1)
+
+        color =
+            Color3.fromHSV(hue,sat,val)
+
+        if callback then
+            callback(color)
+        end
+    end
 
 
     Picker.InputBegan:Connect(function(i)
-        if i.UserInputType==Enum.UserInputType.MouseButton1 then
-            dragging=true
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            pickingColor = true
         end
     end)
 
 
-    Picker.InputEnded:Connect(function(i)
-        if i.UserInputType==Enum.UserInputType.MouseButton1 then
-            dragging=false
+    Hue.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            pickingHue = true
+        end
+    end)
+
+
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            pickingColor = false
+            pickingHue = false
         end
     end)
 
 
     UserInputService.InputChanged:Connect(function(i)
 
-        if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then
+        if i.UserInputType ~= Enum.UserInputType.MouseMovement then
+            return
+        end
 
-            local x=
-            math.clamp(
+
+        if pickingColor then
+
+            sat = math.clamp(
                 (i.Position.X-Picker.AbsolutePosition.X)
                 /Picker.AbsoluteSize.X,
                 0,1
             )
 
-            local y=
-            math.clamp(
-                (i.Position.Y-Picker.AbsolutePosition.Y)
-                /Picker.AbsoluteSize.Y,
+            val = math.clamp(
+                1 -
+                ((i.Position.Y-Picker.AbsolutePosition.Y)
+                /Picker.AbsoluteSize.Y),
                 0,1
             )
 
-
-            color=Color3.fromHSV(
-                x,
-                1-y,
-                1
-            )
-
-
-            Picker.BackgroundColor3=color
-
-
-            if callback then
-                callback(color)
-            end
+            Update()
 
         end
+
+
+        if pickingHue then
+
+            hue = math.clamp(
+                (i.Position.Y-Hue.AbsolutePosition.Y)
+                /Hue.AbsoluteSize.Y,
+                0,1
+            )
+
+            Update()
+
+        end
+
     end)
+
+
+    Update()
 
 end
 
