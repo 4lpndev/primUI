@@ -994,4 +994,82 @@ function Library:Finish(Window)
     return Window
 end
 
+--/////////////////////////////////////////////////////
+--// TEXTBOX
+--/////////////////////////////////////////////////////
+function Library:Textbox(Group, text, placeholder, default, callback)
+    local Holder = Group.Holder
+    default = default or ""
+
+    local Frame = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 55),
+        BackgroundColor3 = self.Theme.Tertiary,
+        Parent = Holder
+    })
+
+    Create("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = Frame
+    })
+
+    local Label = Create("TextLabel", {
+        Size = UDim2.new(1, -20, 0, 18),
+        Position = UDim2.fromOffset(10, 5),
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = Frame
+    })
+
+    local Box = Create("TextBox", {
+        Size = UDim2.new(1, -20, 0, 24),
+        Position = UDim2.fromOffset(10, 25),
+        BackgroundColor3 = self.Theme.Secondary,
+        Text = default,
+        PlaceholderText = placeholder or "",
+        PlaceholderColor3 = self.Theme.SubText,
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        ClearTextOnFocus = false,
+        Parent = Frame
+    })
+
+    Create("UICorner", {
+        CornerRadius = UDim.new(0, 5),
+        Parent = Box
+    })
+
+    Box.Focused:Connect(function()
+        Tween(Box, {
+            BackgroundColor3 = self.Theme.Background
+        }, 0.15)
+    end)
+
+    Box.FocusLost:Connect(function(enterPressed)
+        Tween(Box, {
+            BackgroundColor3 = self.Theme.Secondary
+        }, 0.15)
+
+        if callback then
+            callback(Box.Text, enterPressed)
+        end
+    end)
+
+    return {
+        Set = function(value)
+            Box.Text = tostring(value)
+        end,
+
+        Get = function()
+            return Box.Text
+        end,
+
+        Instance = Box
+    }
+end
+
 return Library
