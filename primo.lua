@@ -289,9 +289,25 @@ function Library:Groupbox(Tab, name)
         Parent = Box
     })
 
+    -- Box needs its own UIListLayout for AutomaticSize to have something to measure against,
+    -- otherwise it collapses to 0 height and swallows everything inside it.
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 4),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = Box
+    })
+
+    Create("UIPadding", {
+        PaddingTop = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 6),
+        PaddingRight = UDim.new(0, 6),
+        PaddingBottom = UDim.new(0, 10),
+        Parent = Box
+    })
+
     local Title = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 24),
-        Position = UDim2.fromOffset(10, 6),
+        Size = UDim2.new(1, 0, 0, 20),
+        LayoutOrder = 1,
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = self.Theme.Text,
@@ -302,9 +318,9 @@ function Library:Groupbox(Tab, name)
     })
 
     local Holder = Create("Frame", {
-        Size = UDim2.new(1, -12, 0, 0),
+        Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
-        Position = UDim2.fromOffset(6, 32),
+        LayoutOrder = 2,
         BackgroundTransparency = 1,
         Parent = Box
     })
@@ -313,11 +329,6 @@ function Library:Groupbox(Tab, name)
     UIList.Padding = UDim.new(0, 6)
     UIList.SortOrder = Enum.SortOrder.LayoutOrder
     UIList.Parent = Holder
-
-    Create("UIPadding", {
-        PaddingBottom = UDim.new(0, 10),
-        Parent = Holder
-    })
 
     local Group = {
         Instance = Box,
