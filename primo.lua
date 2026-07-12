@@ -73,26 +73,10 @@ end
 --// Window constructor
 function Library:CreateWindow(config)
     config = config or {}
-    local TopBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = self.Theme.TopBar,
-        BorderSizePixel = 0,
-        Parent = Main
-    })
 
-    -- UI Name / Title
-    local Title = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 40),
-        Position = UDim2.fromOffset(10, 0),
-        BackgroundTransparency = 1,
-        Text = config.Name or "primUI",
-        TextColor3 = self.Theme.Text,
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        Parent = TopBar
-    })
+    local WindowSize = UDim2.fromOffset(700, 450)
+    local TOPBAR_HEIGHT = 40
+    local SIDEBAR_WIDTH = 160
 
     local ScreenGui = Create("ScreenGui", {
         Name = "UILibrary",
@@ -101,10 +85,11 @@ function Library:CreateWindow(config)
     })
 
     local Main = Create("Frame", {
-        Size = UDim2.fromOffset(700, 450),
+        Size = WindowSize,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = self.Theme.Background,
+        ClipsDescendants = true, -- lets square children get clipped to the rounded corners below
         Parent = ScreenGui
     })
 
@@ -113,38 +98,61 @@ function Library:CreateWindow(config)
         Parent = Main
     })
 
-    local Stroke = Create("UIStroke", {
+    Create("UIStroke", {
         Color = self.Theme.Accent,
         Thickness = 1,
         Transparency = 0.2,
         Parent = Main
     })
 
-    --// Sidebar
-    local Sidebar = Create("Frame", {
-        Size = UDim2.fromOffset(160, 450),
-        BackgroundColor3 = self.Theme.Secondary,
-        Parent = Main
-    })
-
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = Sidebar
-    })
-
-    --// Top bar drag handle
+    --// Top bar (title + drag handle, built and parented correctly this time)
     local TopBar = Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, TOPBAR_HEIGHT),
+        BackgroundColor3 = self.Theme.Secondary,
+        BorderSizePixel = 0,
         Parent = Main
+    })
+
+    local Title = Create("TextLabel", {
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.fromOffset(12, 0),
+        BackgroundTransparency = 1,
+        Text = config.Title or config.Name or "primUI",
+        TextColor3 = self.Theme.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        Parent = TopBar
     })
 
     EnableDrag(Main, TopBar)
 
-    --// Content holder
+    --// Sidebar - fills all height below the TopBar, resizes automatically if Main resizes
+    local Sidebar = Create("Frame", {
+        Size = UDim2.new(0, SIDEBAR_WIDTH, 1, -TOPBAR_HEIGHT),
+        Position = UDim2.fromOffset(0, TOPBAR_HEIGHT),
+        BackgroundColor3 = self.Theme.Secondary,
+        Parent = Main
+    })
+
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 6),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = Sidebar
+    })
+
+    Create("UIPadding", {
+        PaddingTop = UDim.new(0, 8),
+        PaddingLeft = UDim.new(0, 6),
+        PaddingRight = UDim.new(0, 6),
+        Parent = Sidebar
+    })
+
+    --// Content holder - fills all remaining space, resizes automatically if Main resizes
     local Content = Create("Frame", {
-        Position = UDim2.fromOffset(160, 0),
-        Size = UDim2.fromOffset(540, 450),
+        Position = UDim2.new(0, SIDEBAR_WIDTH, 0, TOPBAR_HEIGHT),
+        Size = UDim2.new(1, -SIDEBAR_WIDTH, 1, -TOPBAR_HEIGHT),
         BackgroundTransparency = 1,
         Parent = Main
     })
@@ -155,6 +163,7 @@ function Library:CreateWindow(config)
     Window.Instance = Main
     Window.Sidebar = Sidebar
     Window.Content = Content
+    Window.Size = WindowSize
 
     Window.Tabs = {}
 
@@ -184,8 +193,8 @@ end
 --// TAB SYSTEM
 function Library:CreateWindowTab(Window, name)
     local TabButton = Create("TextButton", {
-        Size = UDim2.new(1, -10, 0, 30),
-        Position = UDim2.fromOffset(5, 5 + (#Window.Tabs * 35)),
+        Size = UDim2.new(1, 0, 0, 32),
+        LayoutOrder = #Window.Tabs,
         BackgroundColor3 = self.Theme.Tertiary,
         Text = name,
         TextColor3 = self.Theme.Text,
@@ -199,11 +208,30 @@ function Library:CreateWindowTab(Window, name)
         Parent = TabButton
     })
 
-    local Page = Create("Frame", {
+    local Page = Create("ScrollingFrame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
+        BorderSizePixel = 0,
         Visible = false,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = self.Theme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Parent = Window.Content
+    })
+
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 10),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = Page
+    })
+
+    Create("UIPadding", {
+        PaddingTop = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+        PaddingBottom = UDim.new(0, 10),
+        Parent = Page
     })
 
     local Tab = {
@@ -242,7 +270,9 @@ end
 --// GROUPBOX
 function Library:Groupbox(Tab, name)
     local Box = Create("Frame", {
-        Size = UDim2.fromOffset(520, 200),
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y, -- grows to fit whatever gets added, never clips
+        LayoutOrder = #Tab.Page:GetChildren(),
         BackgroundColor3 = self.Theme.Secondary,
         Parent = Tab.Page
     })
@@ -260,8 +290,8 @@ function Library:Groupbox(Tab, name)
     })
 
     local Title = Create("TextLabel", {
-        Size = UDim2.new(1, -10, 0, 20),
-        Position = UDim2.fromOffset(10, 5),
+        Size = UDim2.new(1, -20, 0, 24),
+        Position = UDim2.fromOffset(10, 6),
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = self.Theme.Text,
@@ -272,15 +302,22 @@ function Library:Groupbox(Tab, name)
     })
 
     local Holder = Create("Frame", {
-        Size = UDim2.new(1, -10, 1, -30),
-        Position = UDim2.fromOffset(5, 25),
+        Size = UDim2.new(1, -12, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        Position = UDim2.fromOffset(6, 32),
         BackgroundTransparency = 1,
         Parent = Box
     })
 
     local UIList = Instance.new("UIListLayout")
     UIList.Padding = UDim.new(0, 6)
+    UIList.SortOrder = Enum.SortOrder.LayoutOrder
     UIList.Parent = Holder
+
+    Create("UIPadding", {
+        PaddingBottom = UDim.new(0, 10),
+        Parent = Holder
+    })
 
     local Group = {
         Instance = Box,
@@ -978,10 +1015,12 @@ function Library:EnablePolish(Window)
     --/////////////////////////////////////////////////////
     -- OPEN ANIMATION (SMOOTH POP-IN)
     --/////////////////////////////////////////////////////
+    local targetSize = Window.Size or UDim2.fromOffset(700, 450)
+
     Main.Size = UDim2.fromOffset(0, 0)
     Main.BackgroundTransparency = 1
 
-    Tween(Main, {Size = UDim2.fromOffset(700, 450)}, 0.35)
+    Tween(Main, {Size = targetSize}, 0.35)
     Tween(Main, {BackgroundTransparency = 0}, 0.35)
 
 end
