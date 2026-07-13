@@ -289,9 +289,25 @@ function Library:Groupbox(Tab, name)
         Parent = Box
     })
 
+    -- Box needs its own UIListLayout for AutomaticSize to have something to measure against,
+    -- otherwise it collapses to 0 height and swallows everything inside it.
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 4),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = Box
+    })
+
+    Create("UIPadding", {
+        PaddingTop = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 6),
+        PaddingRight = UDim.new(0, 6),
+        PaddingBottom = UDim.new(0, 10),
+        Parent = Box
+    })
+
     local Title = Create("TextLabel", {
-        Size = UDim2.new(1, -20, 0, 24),
-        Position = UDim2.fromOffset(10, 6),
+        Size = UDim2.new(1, 0, 0, 20),
+        LayoutOrder = 1,
         BackgroundTransparency = 1,
         Text = name,
         TextColor3 = self.Theme.Text,
@@ -302,9 +318,9 @@ function Library:Groupbox(Tab, name)
     })
 
     local Holder = Create("Frame", {
-        Size = UDim2.new(1, -12, 0, 0),
+        Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
-        Position = UDim2.fromOffset(6, 32),
+        LayoutOrder = 2,
         BackgroundTransparency = 1,
         Parent = Box
     })
@@ -313,11 +329,6 @@ function Library:Groupbox(Tab, name)
     UIList.Padding = UDim.new(0, 6)
     UIList.SortOrder = Enum.SortOrder.LayoutOrder
     UIList.Parent = Holder
-
-    Create("UIPadding", {
-        PaddingBottom = UDim.new(0, 10),
-        Parent = Holder
-    })
 
     local Group = {
         Instance = Box,
@@ -706,6 +717,7 @@ function Library:Colorpicker(Group,text,default,callback)
         Size=UDim2.fromOffset(120,120),
         Position=UDim2.fromOffset(10,30),
         BackgroundColor3=Color3.fromHSV(0,1,1),
+        Active=true, -- needed so InputBegan actually fires (Frames ignore input by default)
         Parent=Frame
     })
 
@@ -751,6 +763,7 @@ function Library:Colorpicker(Group,text,default,callback)
     local Hue = Create("Frame",{
         Size=UDim2.fromOffset(20,120),
         Position=UDim2.fromOffset(140,30),
+        Active=true, -- needed so InputBegan actually fires (Frames ignore input by default)
         Parent=Frame
     })
 
@@ -769,6 +782,39 @@ function Library:Colorpicker(Group,text,default,callback)
     HueGradient.Parent = Hue
 
 
+    -- Current color indicator (swatch + hex code)
+    local Preview = Create("Frame",{
+        Size=UDim2.fromOffset(40,24),
+        Position=UDim2.fromOffset(170,30),
+        BackgroundColor3=color,
+        Parent=Frame
+    })
+
+    Create("UICorner",{
+        CornerRadius=UDim.new(0,5),
+        Parent=Preview
+    })
+
+    Create("UIStroke",{
+        Color=self.Theme.Accent,
+        Thickness=1,
+        Transparency=0.4,
+        Parent=Preview
+    })
+
+    local HexLabel = Create("TextLabel",{
+        Size=UDim2.fromOffset(70,16),
+        Position=UDim2.fromOffset(170,58),
+        BackgroundTransparency=1,
+        Text="#FFFFFF",
+        TextColor3=self.Theme.SubText,
+        Font=Enum.Font.Code,
+        TextSize=12,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        Parent=Frame
+    })
+
+
     local hue,sat,val = Color3.toHSV(color)
 
     local pickingColor = false
@@ -783,15 +829,52 @@ function Library:Colorpicker(Group,text,default,callback)
         color =
             Color3.fromHSV(hue,sat,val)
 
+        Preview.BackgroundColor3 = color
+
+        local r = math.floor(color.R*255 + 0.5)
+        local g = math.floor(color.G*255 + 0.5)
+        local b = math.floor(color.B*255 + 0.5)
+        HexLabel.Text = string.format("#%02X%02X%02X", r, g, b)
+
         if callback then
             callback(color)
         end
     end
 
 
+    local function updateColorFromInput(i)
+        sat = math.clamp(
+            (i.Position.X-Picker.AbsolutePosition.X)
+            /Picker.AbsoluteSize.X,
+            0,1
+        )
+
+        val = math.clamp(
+            1 -
+            ((i.Position.Y-Picker.AbsolutePosition.Y)
+            /Picker.AbsoluteSize.Y),
+            0,1
+        )
+
+        Update()
+    end
+
+
+    local function updateHueFromInput(i)
+        hue = math.clamp(
+            (i.Position.Y-Hue.AbsolutePosition.Y)
+            /Hue.AbsoluteSize.Y,
+            0,1
+        )
+
+        Update()
+    end
+
+
     Picker.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             pickingColor = true
+            updateColorFromInput(i) -- update immediately on click, not just while dragging
         end
     end)
 
@@ -799,6 +882,7 @@ function Library:Colorpicker(Group,text,default,callback)
     Hue.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
             pickingHue = true
+            updateHueFromInput(i) -- update immediately on click, not just while dragging
         end
     end)
 
@@ -817,37 +901,12 @@ function Library:Colorpicker(Group,text,default,callback)
             return
         end
 
-
         if pickingColor then
-
-            sat = math.clamp(
-                (i.Position.X-Picker.AbsolutePosition.X)
-                /Picker.AbsoluteSize.X,
-                0,1
-            )
-
-            val = math.clamp(
-                1 -
-                ((i.Position.Y-Picker.AbsolutePosition.Y)
-                /Picker.AbsoluteSize.Y),
-                0,1
-            )
-
-            Update()
-
+            updateColorFromInput(i)
         end
 
-
         if pickingHue then
-
-            hue = math.clamp(
-                (i.Position.Y-Hue.AbsolutePosition.Y)
-                /Hue.AbsoluteSize.Y,
-                0,1
-            )
-
-            Update()
-
+            updateHueFromInput(i)
         end
 
     end)
