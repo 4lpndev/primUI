@@ -922,14 +922,21 @@ end
 function Library:Notify(text, duration)
     duration = duration or 3
 
+    -- Notification sound
     local soid = getcustomasset("notify.mp3")
 
     local sound = Instance.new("Sound")
-
     sound.SoundId = soid
-
+    sound.Volume = 1
     sound.Parent = workspace
 
+    sound.Ended:Once(function()
+        sound:Destroy()
+    end)
+
+    sound:Play()
+
+    -- Notification UI
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
 
@@ -944,20 +951,20 @@ function Library:Notify(text, duration)
     end
 
     local notif = Create("Frame", {
-        Size = UDim2.fromOffset(250,45),
-        Position = UDim2.new(1,-270,1,-70),
+        Size = UDim2.fromOffset(250, 45),
+        Position = UDim2.new(1, -270, 1, -70),
         BackgroundColor3 = self.Theme.Secondary,
         Parent = holder
     })
 
     Create("UICorner", {
-        CornerRadius = UDim.new(0,8),
+        CornerRadius = UDim.new(0, 8),
         Parent = notif
     })
 
-    local label = Create("TextLabel", {
-        Size = UDim2.new(1,-20,1,0),
-        Position = UDim2.fromOffset(10,0),
+    Create("TextLabel", {
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.fromOffset(10, 0),
         BackgroundTransparency = 1,
         Text = text,
         TextColor3 = self.Theme.Text,
@@ -970,18 +977,17 @@ function Library:Notify(text, duration)
     Tween(
         notif,
         {
-            Position = UDim2.new(1,-270,1,-130)
+            Position = UDim2.new(1, -270, 1, -130)
         },
-        .3
+        0.3
     )
 
-    task.delay(duration,function()
-        sound:Play()
-        Tween(notif,{
+    task.delay(duration, function()
+        Tween(notif, {
             BackgroundTransparency = 1
-        },.3)
+        }, 0.3)
 
-        task.wait(.3)
+        task.wait(0.3)
 
         notif:Destroy()
     end)
