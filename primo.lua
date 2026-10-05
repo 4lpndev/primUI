@@ -928,6 +928,8 @@ function Library:Notify(text, duration)
 
     sound.SoundId = soid
 
+    sound.Parent = workspace
+
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
 
