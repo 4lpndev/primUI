@@ -922,6 +922,12 @@ end
 function Library:Notify(text, duration)
     duration = duration or 3
 
+    local soid = getcustomasset("notify.mp3")
+
+    local sound = Instance.new("Sound")
+
+    sound.SoundId = soid
+
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
 
@@ -968,6 +974,7 @@ function Library:Notify(text, duration)
     )
 
     task.delay(duration,function()
+        sound:Play()
         Tween(notif,{
             BackgroundTransparency = 1
         },.3)
