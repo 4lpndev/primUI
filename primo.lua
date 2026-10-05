@@ -930,6 +930,7 @@ function Library:Notify(text, duration)
 
     sound.Parent = workspace
 
+    sound:Play()
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
 
@@ -976,7 +977,6 @@ function Library:Notify(text, duration)
     )
 
     task.delay(duration,function()
-        sound:Play()
         Tween(notif,{
             BackgroundTransparency = 1
         },.3)
